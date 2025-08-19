@@ -48,6 +48,8 @@ def get_uid(min_year, max_year):
     print("We have got all the uids")
     print('_'*100)
     print(f"start to write to {output_file}")
+    if not os.path.exists(os.path.dirname(output_file)):
+        os.makedirs(os.path.dirname(output_file), exist_ok=True)
     tmp_path = output_file + ".tmp"
     with open(tmp_path, "w", encoding="utf-8") as f:
         for uid in seen.keys():
