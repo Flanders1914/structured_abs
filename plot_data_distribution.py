@@ -1,5 +1,5 @@
 # plot the data distribution in a bar chart
-
+# python plot_data_distribution.py --data_path abstracts/meta_analyser_result.json --save_dir plots/ --journal_threshold 10000 --label_threshold 100000 --nlm_category_threshold 0 --keyword_threshold 1000
 import json
 import matplotlib.pyplot as plt
 import argparse
@@ -135,7 +135,7 @@ if __name__ == "__main__":
                        help="Minimum frequency threshold for labels")
     parser.add_argument("--nlm_category_threshold", type=int, default=0,
                        help="Minimum frequency threshold for NLM categories")
-    parser.add_argument("--keyword_threshold", type=int, default=1000,
+    parser.add_argument("--keyword_threshold", type=int, default=10000,
                        help="Minimum frequency threshold for keywords")
     args = parser.parse_args()
 
