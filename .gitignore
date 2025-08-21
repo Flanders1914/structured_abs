@@ -4,3 +4,5 @@ myvenv/
 edirect/
 __pycache__/
 abstracts/
+plots/
+abstracts.tar.gz

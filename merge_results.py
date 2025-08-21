@@ -1,4 +1,5 @@
 # transfer the data in the file list to the target file
+# python merge_results.py
 import os
 
 file_list = [

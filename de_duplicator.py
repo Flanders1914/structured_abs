@@ -1,5 +1,6 @@
 # de-duplicator
 # deduplicate(by pmid, doi, title)
+# python de_duplicator.py --data_path abstracts/raw_data.jsonl --save_path abstracts/dedup_data.jsonl
 import json
 import argparse
 
