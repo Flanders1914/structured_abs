@@ -1,6 +1,7 @@
 import json
 from config import DATA_DIR, BEGIN_YEAR, END_YEAR, FILE_SUFFIX
 import os
+import argparse
 
 CONCLUSION_LABEL = [
     "conclusion",
@@ -10,7 +11,22 @@ CONCLUSION_LABEL = [
     "conclusion-",
     "conclusions-",
     "conclusion(s)",
+    "conclusion.",
+    "conclusions.",
+    "author's conclusion",
+    "author's conclusions",
+    "authors' conclusion",
+    "authors' conclusions",
+    "conclusion and relevance",
+    "conclusions and relevance",
+    "conclusion and implications",
+    "conclusions and implications",
+    "conclusions/interpretation",
+    "conclusion/interpretation",
+    "conclusion/relevance",
 ]
+
+CLIP_STHRESHOLD = 200
 
 def check_data_item(record, statistics_dict, pmid_set):
     """
@@ -65,6 +81,8 @@ def check_data_item(record, statistics_dict, pmid_set):
     else:
         statistics_dict["language_dict"][language] += 1
 
+    has_conclusion = False
+
     # count the label and nlm_category
     for abstract in record["abstract"]:
         label = abstract["label"]
@@ -77,10 +95,11 @@ def check_data_item(record, statistics_dict, pmid_set):
             statistics_dict["nlm_category_dict"][nlm_category] = 1
         else:
             statistics_dict["nlm_category_dict"][nlm_category] += 1
-
         # check if the conclusion label is in the abstract
         if label.lower() in CONCLUSION_LABEL or nlm_category.lower() in CONCLUSION_LABEL:
-            statistics_dict["journal_dict"][journal]["conclusion_num"] += 1
+            has_conclusion = True
+    if has_conclusion:
+        statistics_dict["journal_dict"][journal]["conclusion_num"] += 1
         
     # count the keywords
     for keyword in record["keywords"]:
@@ -92,6 +111,20 @@ def check_data_item(record, statistics_dict, pmid_set):
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--data_path", type=str, default=None)
+    parser.add_argument("--save_path", type=str, default=None)
+    args = parser.parse_args()
+
+
+    # get the data path
+    if args.data_path is None or args.save_path is None:
+        data_path = os.path.join(DATA_DIR, f"abstracts_{BEGIN_YEAR}_{END_YEAR}{FILE_SUFFIX}.jsonl")
+        save_path = os.path.join(DATA_DIR, f"statistics_{BEGIN_YEAR}_{END_YEAR}{FILE_SUFFIX}.json")
+    else:
+        data_path = args.data_path
+        save_path = args.save_path
+
     statistics_dict = {}
     statistics_dict["data_size"] = 0
     statistics_dict["pmid_num"] = 0
@@ -102,10 +135,6 @@ if __name__ == "__main__":
     statistics_dict["language_dict"] = {}
     statistics_dict["keywords_dict"] = {}
 
-    # get the data path
-    data_path = os.path.join(DATA_DIR, f"abstracts_{BEGIN_YEAR}_{END_YEAR}{FILE_SUFFIX}.jsonl")
-    save_path = os.path.join(DATA_DIR, f"statistics_{BEGIN_YEAR}_{END_YEAR}{FILE_SUFFIX}.json")
-
     with open(data_path, "r") as f:
         for line in f:
             record = json.loads(line)
@@ -114,7 +143,7 @@ if __name__ == "__main__":
                 print(f"processed {statistics_dict['data_size']} records")
 
     # sort the journal_dict by the conclusion_num
-    statistics_dict["journal_dict"] = dict(sorted(statistics_dict["journal_dict"].items(), key=lambda x: x[1]["num"], reverse=True))
+    statistics_dict["journal_dict"] = dict(sorted(statistics_dict["journal_dict"].items(), key=lambda x: x[1]["conclusion_num"], reverse=True))
     # sort the label_dict by the num
     statistics_dict["label_dict"] = dict(sorted(statistics_dict["label_dict"].items(), key=lambda x: x[1], reverse=True))
     # sort the nlm_category_dict by the num
@@ -123,6 +152,11 @@ if __name__ == "__main__":
     statistics_dict["language_dict"] = dict(sorted(statistics_dict["language_dict"].items(), key=lambda x: x[1], reverse=True))
     # sort the keywords_dict by the num
     statistics_dict["keywords_dict"] = dict(sorted(statistics_dict["keywords_dict"].items(), key=lambda x: x[1], reverse=True))
+
+    # clip the list by the CLIP_STHRESHOLD
+    statistics_dict["journal_dict"] = {k: v for k, v in statistics_dict["journal_dict"].items() if v["conclusion_num"] > CLIP_STHRESHOLD}
+    statistics_dict["label_dict"] = {k: v for k, v in statistics_dict["label_dict"].items() if v > CLIP_STHRESHOLD}
+    statistics_dict["keywords_dict"] = {k: v for k, v in statistics_dict["keywords_dict"].items() if v > CLIP_STHRESHOLD}
 
     # save the statistics_dict to the save_path
     with open(save_path, "w") as f:
